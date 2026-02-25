@@ -1,0 +1,90 @@
+services:
+  server:
+    build: ./server
+    container_name: ubuntu-server
+    hostname: server
+    ports:
+      - "8080:80"
+      - "2222:22"
+    networks:
+      pocnet:
+        ipv4_address: 172.28.0.10
+
+  client:
+    build: ./client
+    container_name: ubuntu-client
+    hostname: client
+    depends_on:
+      - server
+    tty: true
+    stdin_open: true
+    networks:
+      pocnet:
+        ipv4_address: 172.28.0.20
+
+  # Banco do Zabbix
+  postgres-zbx:
+    image: postgres:16
+    container_name: postgres-zabbix
+    hostname: postgres-zbx
+    environment:
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix_pwd
+      POSTGRES_DB: zabbix
+    volumes:
+      - zbx_pg_data:/var/lib/postgresql/data
+    networks:
+      pocnet:
+        ipv4_address: 172.28.0.30
+    restart: unless-stopped
+
+  # Zabbix Server (PostgreSQL)
+  zabbix-server:
+    image: zabbix/zabbix-server-pgsql:latest
+    container_name: zabbix-server
+    hostname: zabbix-server
+    depends_on:
+      - postgres-zbx
+    environment:
+      DB_SERVER_HOST: postgres-zbx
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix_pwd
+      POSTGRES_DB: zabbix
+    ports:
+      - "10051:10051" # Zabbix trapper/server
+    networks:
+      pocnet:
+        ipv4_address: 172.28.0.31
+    restart: unless-stopped
+
+  # Zabbix Web (Nginx + PostgreSQL)
+  zabbix-web:
+    image: zabbix/zabbix-web-nginx-pgsql:latest
+    container_name: zabbix-web
+    hostname: zabbix-web
+    depends_on:
+      - zabbix-server
+      - postgres-zbx
+    environment:
+      ZBX_SERVER_HOST: zabbix-server
+      DB_SERVER_HOST: postgres-zbx
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix_pwd
+      POSTGRES_DB: zabbix
+      PHP_TZ: America/Sao_Paulo
+    ports:
+      - "8081:8080" # Zabbix web (evita conflito com Apache da POC)
+    networks:
+      pocnet:
+        ipv4_address: 172.28.0.32
+    restart: unless-stopped
+
+networks:
+  pocnet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  zbx_pg_data:
