@@ -6,11 +6,28 @@ RUN apt-get update && apt-get install -y \
   apache2 \
   openssh-server \
   sudo \
+  curl \
+  gnupg \
+  perl \
+  libnet-ssleay-perl \
+  openssl \
+  libauthen-pam-perl \
+  libpam-runtime \
+  libio-pty-perl \
+  libdatetime-perl \
+  apt-show-versions \
+  iproute2 \
+  net-tools \
+  nano \
+  vim \
+  rsyslog \
+  python3 \
   && rm -rf /var/lib/apt/lists/*
 
 # Cria usuário para teste SSH/SCP
 RUN useradd -m -s /bin/bash devuser && \
   echo "devuser:devpass" | chpasswd && \
+  usermod -aG sudo devuser && \
   mkdir -p /home/devuser/.ssh && \
   chown -R devuser:devuser /home/devuser/.ssh
 
@@ -21,12 +38,20 @@ RUN mkdir -p /var/run/sshd && \
   sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
   echo "AllowUsers devuser" >> /etc/ssh/sshd_config
 
+# Instala Webmin via .deb copiado localmente
+COPY webmin.deb /tmp/webmin.deb
+RUN apt-get update && \
+  dpkg -i /tmp/webmin.deb; \
+  apt-get install -f -y && \
+  rm /tmp/webmin.deb && \
+  rm -rf /var/lib/apt/lists/*
+
 # Página simples do Apache
 RUN echo "<h1>Apache no Container 1 (Servidor)</h1>" > /var/www/html/index.html
 
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
-EXPOSE 80 22
+EXPOSE 80 22 10000
 
 CMD ["/start.sh"]
