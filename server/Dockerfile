@@ -52,6 +52,18 @@ RUN echo "<h1>Apache no Container 1 (Servidor)</h1>" > /var/www/html/index.html
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
+# Scripts incorrect-password
+COPY scripts/incorrect-password/ /opt/scripts/incorrect-password/
+RUN chmod +x /opt/scripts/incorrect-password/*.py
+
+# Scripts system-activity
+COPY scripts/system-activity/ /opt/scripts/system-activity/
+RUN chmod +x /opt/scripts/system-activity/*.py
+
+# Scripts error-analysis
+COPY scripts/error-analysis/ /opt/scripts/error-analysis/
+RUN chmod +x /opt/scripts/error-analysis/*.py
+
 EXPOSE 80 22 10000
 
 CMD ["/start.sh"]
