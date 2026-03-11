@@ -64,6 +64,9 @@ RUN chmod +x /opt/scripts/system-activity/*.py
 COPY scripts/error-analysis/ /opt/scripts/error-analysis/
 RUN chmod +x /opt/scripts/error-analysis/*.py
 
+# Instala UFW
+RUN apt-get update && apt-get install -y UFW
+
 EXPOSE 80 22 10000
 
 CMD ["/start.sh"]

@@ -6,7 +6,10 @@ services:
     ports:
       - "8080:80"
       - "2222:22"
-      - "10000:10000"   
+      - "10000:10000" 
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW  
     networks:
       pocnet:
         ipv4_address: 172.28.0.10
